@@ -1,41 +1,77 @@
+using AutoMapper;
+using ConsultaCreditos.API.BackgroundServices;
+using ConsultaCreditos.API.Middlewares;
+using ConsultaCreditos.Application.Handlers;
+using ConsultaCreditos.Application.Mappings;
+using ConsultaCreditos.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+
+builder.Services.AddInfrastructure(builder.Configuration);
+
+var mapperConfig = new MapperConfiguration(cfg =>
+{
+    cfg.AddProfile<CreditoProfile>();
+});
+builder.Services.AddSingleton(mapperConfig.CreateMapper());
+
+builder.Services.AddScoped<IntegrarCreditoHandler>();
+builder.Services.AddScoped<ObterCreditosPorNfseHandler>();
+builder.Services.AddScoped<ObterCreditoPorNumeroHandler>();
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name: "postgresql",
+        tags: new[] { "db", "ready" })
+    .AddAzureServiceBusTopic(
+        builder.Configuration["ServiceBus:ConnectionString"]!,
+        builder.Configuration["ServiceBus:TopicName"]!,
+        name: "servicebus",
+        tags: new[] { "messaging", "ready" });
+
+builder.Services.AddHostedService<CreditoProcessorService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
+app.MapControllers();
+
+app.MapHealthChecks("/self", new HealthCheckOptions
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
+
+Log.Information("Iniciando ConsultaCreditos.API");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
