@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: consulta-creditos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: consulta_creditos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d consulta_creditos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - consulta-creditos-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: consulta-creditos-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=consulta_creditos;Username=postgres;Password=postgres123"
+      ServiceBus__ConnectionString: "${SERVICEBUS_CONNECTION_STRING}"
+      ServiceBus__TopicName: "integrar-credito-constituido-entry"
+      ServiceBus__SubscriptionName: "consulta-creditos-subscription"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - consulta-creditos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/self || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  consulta-creditos-network:
+    driver: bridge

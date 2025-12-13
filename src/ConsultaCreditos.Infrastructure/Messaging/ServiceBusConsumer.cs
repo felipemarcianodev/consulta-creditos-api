@@ -1,10 +1,14 @@
+using System.Net.Sockets;
 using System.Text.Json;
 using Azure.Messaging.ServiceBus;
 using ConsultaCreditos.Application.Commands;
 using ConsultaCreditos.Application.DTOs;
 using ConsultaCreditos.Application.Handlers;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.CircuitBreaker;
 
 namespace ConsultaCreditos.Infrastructure.Messaging;
 
@@ -14,13 +18,32 @@ public class ServiceBusConsumer
     private readonly ServiceBusProcessor _processor;
     private readonly ProcessarCreditoHandler _handler;
     private readonly ILogger<ServiceBusConsumer> _logger;
-
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly AsyncCircuitBreakerPolicy _circuitBreaker;
     public ServiceBusConsumer(
         IConfiguration configuration,
-        ProcessarCreditoHandler handler,
+        IServiceScopeFactory scopeFactory,
         ILogger<ServiceBusConsumer> logger)
     {
-        _handler = handler;
+        _circuitBreaker = Policy
+        .Handle<ServiceBusException>()
+        .Or<SocketException>()
+        .CircuitBreakerAsync(
+            exceptionsAllowedBeforeBreaking: 3,
+            durationOfBreak: TimeSpan.FromSeconds(30),
+            onBreak: (ex, breakDelay) =>
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Circuit breaker ABERTO por {Delay}s (Service Bus indisponível)",
+                    breakDelay.TotalSeconds);
+            },
+            onReset: () =>
+            {
+                _logger.LogInformation("Circuit breaker FECHADO. Tentando reconectar ao Service Bus.");
+            });
+
+        _scopeFactory = scopeFactory;
         _logger = logger;
 
         var connectionString = configuration["ServiceBus:ConnectionString"]
@@ -47,8 +70,11 @@ public class ServiceBusConsumer
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await _processor.StartProcessingAsync(cancellationToken);
-        _logger.LogInformation("ServiceBusConsumer iniciado");
+        await _circuitBreaker.ExecuteAsync(async () =>
+        {
+            await _processor.StartProcessingAsync(cancellationToken);
+            _logger.LogInformation("ServiceBusConsumer iniciado");
+        });
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -59,6 +85,11 @@ public class ServiceBusConsumer
 
     private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
     {
+        using var scope = _scopeFactory.CreateScope();
+
+        var handler = scope.ServiceProvider
+            .GetRequiredService<ProcessarCreditoHandler>();
+
         try
         {
             var messageBody = args.Message.Body.ToString();
@@ -66,18 +97,21 @@ public class ServiceBusConsumer
 
             if (credito == null)
             {
-                _logger.LogWarning("Mensagem inválida recebida. MessageId: {MessageId}", args.Message.MessageId);
-                await args.DeadLetterMessageAsync(args.Message, "InvalidMessage", "Falha ao deserializar mensagem");
+                _logger.LogWarning(
+                    "Mensagem inválida. MessageId: {MessageId}",
+                    args.Message.MessageId);
+
+                await args.DeadLetterMessageAsync(
+                    args.Message,
+                    "InvalidMessage",
+                    "Falha ao deserializar mensagem");
+
                 return;
             }
 
-            _logger.LogInformation(
-                "Processando crédito {NumeroCredito}. MessageId: {MessageId}",
-                credito.NumeroCredito,
-                args.Message.MessageId);
-
             var command = new ProcessarCreditoCommand(credito);
-            await _handler.Handle(command, args.CancellationToken);
+
+            await handler.Handle(command, args.CancellationToken);
 
             await args.CompleteMessageAsync(args.Message);
 
@@ -88,7 +122,11 @@ public class ServiceBusConsumer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao processar mensagem. MessageId: {MessageId}", args.Message.MessageId);
+            _logger.LogError(
+                ex,
+                "Erro ao processar mensagem. MessageId: {MessageId}",
+                args.Message.MessageId);
+
             await args.AbandonMessageAsync(args.Message);
         }
     }
