@@ -58,7 +58,7 @@ public class IntegrarCreditoHandlerTests
 
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        _serviceBusPublisherMock.Verify(x => x.PublicarAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _serviceBusPublisherMock.Verify(x => x.PublishAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class IntegrarCreditoHandlerTests
         var act = async () => await _handler.Handle(command);
 
         await act.Should().ThrowAsync<ValidationException>();
-        _serviceBusPublisherMock.Verify(x => x.PublicarAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        _serviceBusPublisherMock.Verify(x => x.PublishAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class IntegrarCreditoHandlerTests
 
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        _serviceBusPublisherMock.Verify(x => x.PublicarAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        _serviceBusPublisherMock.Verify(x => x.PublishAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class IntegrarCreditoHandlerTests
 
         await _handler.Handle(command);
 
-        _serviceBusPublisherMock.Verify(x => x.PublicarAsync(credito1, It.IsAny<CancellationToken>()), Times.Once);
-        _serviceBusPublisherMock.Verify(x => x.PublicarAsync(credito2, It.IsAny<CancellationToken>()), Times.Once);
+        _serviceBusPublisherMock.Verify(x => x.PublishAsync(credito1, It.IsAny<CancellationToken>()), Times.Once);
+        _serviceBusPublisherMock.Verify(x => x.PublishAsync(credito2, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

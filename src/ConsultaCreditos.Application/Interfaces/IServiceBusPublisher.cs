@@ -4,5 +4,5 @@ namespace ConsultaCreditos.Application.Interfaces;
 
 public interface IServiceBusPublisher
 {
-    Task PublicarAsync(IntegrarCreditoRequest credito, CancellationToken cancellationToken = default);
+    Task PublishAsync<T>(T data, CancellationToken cancellationToken = default) where T: class;
 }

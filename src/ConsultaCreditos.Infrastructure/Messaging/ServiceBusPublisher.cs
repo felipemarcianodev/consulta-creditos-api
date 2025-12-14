@@ -29,7 +29,7 @@ public class ServiceBusPublisher : IServiceBusPublisher
         _sender = _client.CreateSender(topicName);
     }
 
-    public async Task PublicarAsync(IntegrarCreditoRequest credito, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<T>(T credito, CancellationToken cancellationToken = default) where T: class
     {
         try
         {
@@ -43,13 +43,12 @@ public class ServiceBusPublisher : IServiceBusPublisher
             await _sender.SendMessageAsync(message, cancellationToken);
 
             _logger.LogInformation(
-                "Crédito {NumeroCredito} publicado no Service Bus com sucesso. MessageId: {MessageId}",
-                credito.NumeroCredito,
+                "Publicado no Service Bus com sucesso. MessageId: {MessageId}",
                 message.MessageId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao publicar crédito {NumeroCredito} no Service Bus", credito.NumeroCredito);
+            _logger.LogError(ex, "Erro ao publicar no Service Bus");
             throw;
         }
     }

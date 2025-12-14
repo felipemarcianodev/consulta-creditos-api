@@ -1,11 +1,13 @@
 using AutoMapper;
 using ConsultaCreditos.Application.Handlers;
+using ConsultaCreditos.Application.Interfaces;
 using ConsultaCreditos.Application.Mappings;
 using ConsultaCreditos.Application.Queries;
 using ConsultaCreditos.Domain.Entities;
 using ConsultaCreditos.Domain.Enums;
 using ConsultaCreditos.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace ConsultaCreditos.UnitTests.Application.Handlers;
@@ -15,10 +17,11 @@ public class ObterCreditoPorNumeroHandlerTests
     private readonly Mock<ICreditoRepository> _repositoryMock;
     private readonly IMapper _mapper;
     private readonly ObterCreditoPorNumeroHandler _handler;
-
+    private readonly Mock<IServiceBusPublisher> _serviceBusPublisherMock;
     public ObterCreditoPorNumeroHandlerTests()
     {
         _repositoryMock = new Mock<ICreditoRepository>();
+        _serviceBusPublisherMock = new Mock<IServiceBusPublisher>();
 
         var configuration = new MapperConfiguration(cfg =>
         {
@@ -26,7 +29,8 @@ public class ObterCreditoPorNumeroHandlerTests
         });
         _mapper = configuration.CreateMapper();
 
-        _handler = new ObterCreditoPorNumeroHandler(_repositoryMock.Object, _mapper);
+        var loggerMock = new Mock<ILogger<ObterCreditoPorNumeroHandler>>();
+        _handler = new ObterCreditoPorNumeroHandler(_repositoryMock.Object, _mapper, _serviceBusPublisherMock.Object, loggerMock.Object);
     }
 
     [Fact]

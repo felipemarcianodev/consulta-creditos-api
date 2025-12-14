@@ -60,6 +60,12 @@ app.MapControllers();
 
 app.HealthCheckCustomConfig();
 
-Log.Information("Iniciando ConsultaCreditos.API");
+if (!app.Environment.EnvironmentName.Equals("Testing", StringComparison.OrdinalIgnoreCase))
+{
+    Log.Information("{ApplicationName} iniciada com observabilidade completa em {EnvironmentName}", app.Environment.ApplicationName, app.Environment.EnvironmentName);
+}
+
+Environment.SetEnvironmentVariable("DOTNET_CLI_TELEMETRY_OPTOUT", "1");
+Environment.SetEnvironmentVariable("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1");
 
 app.Run();

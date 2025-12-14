@@ -2,6 +2,7 @@ using ConsultaCreditos.Application.Commands;
 using ConsultaCreditos.Application.DTOs;
 using ConsultaCreditos.Application.Interfaces;
 using ConsultaCreditos.Application.Validators;
+using ConsultaCreditos.Domain.Exceptions;
 using FluentValidation;
 
 namespace ConsultaCreditos.Application.Handlers;
@@ -26,10 +27,10 @@ public class IntegrarCreditoHandler
             if (!validationResult.IsValid)
             {
                 var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                throw new ValidationException($"Erro de validação: {errors}");
+                throw new DomainException($"Erro de validação: {errors}");
             }
 
-            await _serviceBusPublisher.PublicarAsync(credito, cancellationToken);
+            await _serviceBusPublisher.PublishAsync(credito, cancellationToken);
         }
 
         return IntegrarCreditoResponse.Sucesso();
