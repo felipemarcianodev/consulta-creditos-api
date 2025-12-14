@@ -193,42 +193,79 @@ Configure as variáveis:
 SERVICEBUS_CONNECTION_STRING=Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=your-key
 ```
 
-## Executando o projeto
+# Executando o projeto
 
-### Opção 1: Docker (recomendado)
+## Execução com Docker
 
-#### Windows (PowerShell)
+### 1. Configure as variáveis de ambiente
 
-```powershell
-# Iniciar todos os serviços
-.\scripts\start.ps1
-
-# Aplicar migrations no banco
-.\scripts\migrations.ps1
-
-# Parar serviços
-.\scripts\stop.ps1
-```
-
-#### Linux/Mac
+Crie o arquivo `.env` na raiz do projeto:
 
 ```bash
-# Tornar scripts executáveis (primeira vez)
-chmod +x scripts/*.sh
-
-# Iniciar todos os serviços
-./scripts/start.sh
-
-# Aplicar migrations no banco
-./scripts/migrations.sh
-
-# Parar serviços
-./scripts/stop.sh
+# Copie o exemplo
+cp .env.example .env
 ```
 
-A API estará disponível em: http://localhost:8080
+Edite e configure sua connection string do Azure Service Bus
+SERVICEBUS_CONNECTION_STRING=Endpoint=sb://...
 
-### Opção 2: Execução local
+### 2. Inicie os containers
+
+#### Primeira vez ou após alterações no código
+docker-compose up --build -d
+
+#### Outras vezes (reusa a imagem existente)
+docker-compose up -d
+
+### 3. Aplique as migrations
+
+#### Linux/Mac
+./scripts/migrations.sh
+
+#### Windows PowerShell
+.\scripts\migrations.ps1
+
+#### Ou manualmente
+docker-compose exec api dotnet ef database update --project /src/src/ConsultaCreditos.Infrastructure
+
+### 4. Acesse a aplicação
+
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger
+- Health check: http://localhost:8080/health/self
+
+### 5. Ver logs
+
+#### Todos os serviços
+docker-compose logs -f
+
+#### Apenas API
+docker-compose logs -f api
+
+#### Apenas PostgreSQL
+docker-compose logs -f postgres
+
+### 6. Parar os containers
+
+#### Parar mas manter os dados
+docker-compose down
+
+#### Parar e remover volumes (CUIDADO: apaga dados do banco)
+docker-compose down -v
+
+## Execução local (sem Docker)
+
+1. Configure a connection string do PostgreSQL no appsettings.Development.json
+2. Execute as migrations:
+
+cd src/ConsultaCreditos.API
+dotnet ef database update --project ../ConsultaCreditos.Infrastructure
+
+3. Execute a aplicação:
+
+dotnet run --project src/ConsultaCreditos.API
+
+A API estará disponível em: http://localhost:5000
 
 1. Configure a connection string do PostgreSQL no `appsettings.Development.json`
 2. Execute as migrations:
@@ -246,95 +283,38 @@ dotnet run --project src/ConsultaCreditos.API
 
 A API estará disponível em: http://localhost:5000
 
-## Endpoints da API
+## Comandos Docker Compose úteis
 
-### Health checks
+#### Reconstruir imagens (após mudanças no código)
+docker-compose build
 
-```bash
-GET /health/self   # Verifica se a API está respondendo
-GET /health/ready  # Verifica se API, PostgreSQL e Service Bus estão prontos
-```
+#### Forçar rebuild sem cache
+docker-compose build --no-cache
 
-### Integrar créditos
+#### Ver status dos containers
+docker-compose ps
 
-```bash
-POST /api/creditos/integrar-credito-constituido
-```
+#### Executar comando dentro do container
+docker-compose exec api bash
+docker-compose exec postgres psql -U postgres -d consulta_creditos
 
-**Request body:**
+#### Ver logs em tempo real
+docker-compose logs -f
 
-```json
-[
-  {
-    "numeroCredito": "123456",
-    "numeroNfse": "7891011",
-    "dataConstituicao": "2024-02-25",
-    "valorIssqn": 1500.75,
-    "tipoCredito": "ISSQN",
-    "simplesNacional": "Sim",
-    "aliquota": 5.0,
-    "valorFaturado": 30000.0,
-    "valorDeducao": 5000.0,
-    "baseCalculo": 25000.0
-  }
-]
-```
+#### Restart de um serviço específico
+docker-compose restart api
 
-**Response (202 Accepted):**
+#### Parar apenas um serviço
+docker-compose stop api
 
-```json
-{
-  "success": true
-}
-```
+#### Iniciar apenas um serviço
+docker-compose start api
 
-### Consultar créditos por NFS-e
+#### Remover containers órfãos
+docker-compose down --remove-orphans
 
-```bash
-GET /api/creditos/{numeroNfse}
-```
-
-**Response:**
-
-```json
-[
-  {
-    "numeroCredito": "123456",
-    "numeroNfse": "7891011",
-    "dataConstituicao": "2024-02-25",
-    "valorIssqn": 1500.75,
-    "tipoCredito": "ISSQN",
-    "simplesNacional": "Sim",
-    "aliquota": 5.0,
-    "valorFaturado": 30000.00,
-    "valorDeducao": 5000.00,
-    "baseCalculo": 25000.00
-  }
-]
-```
-
-### Consultar crédito específico
-
-```bash
-GET /api/creditos/credito/{numeroCredito}
-```
-
-**Response:**
-
-```json
-{
-  "numeroCredito": "123456",
-  "numeroNfse": "7891011",
-  "dataConstituicao": "2024-02-25",
-  "valorIssqn": 1500.75,
-  "tipoCredito": "ISSQN",
-  "simplesNacional": "Sim",
-  "aliquota": 5.0,
-  "valorFaturado": 30000.00,
-  "valorDeducao": 5000.00,
-  "baseCalculo": 25000.00
-}
-```
+#### Ver uso de recursos
+docker stats
 
 ## Executando testes
 

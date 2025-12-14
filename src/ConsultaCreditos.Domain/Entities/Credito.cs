@@ -1,32 +1,26 @@
 using ConsultaCreditos.Domain.Enums;
 using ConsultaCreditos.Domain.Exceptions;
-using ConsultaCreditos.Domain.ValueObjects;
 
 namespace ConsultaCreditos.Domain.Entities;
 
 public class Credito
 {
     public long Id { get; private set; }
-    public NumeroCredito NumeroCredito { get; private set; }
-    public NumeroNfse NumeroNfse { get; private set; }
+    public string NumeroCredito { get; private set; }
+    public string NumeroNfse { get; private set; }
     public DateTime DataConstituicao { get; private set; }
-    public Dinheiro ValorIssqn { get; private set; }
+    public decimal ValorIssqn { get; private set; }
     public TipoCredito TipoCredito { get; private set; }
     public bool SimplesNacional { get; private set; }
-    public Percentual Aliquota { get; private set; }
-    public Dinheiro ValorFaturado { get; private set; }
-    public Dinheiro ValorDeducao { get; private set; }
-    public Dinheiro BaseCalculo { get; private set; }
+    public decimal Aliquota { get; private set; }
+    public decimal ValorFaturado { get; private set; }
+    public decimal ValorDeducao { get; private set; }
+    public decimal BaseCalculo { get; private set; }
 
     private Credito()
     {
-        NumeroCredito = null!;
-        NumeroNfse = null!;
-        ValorIssqn = null!;
-        Aliquota = null!;
-        ValorFaturado = null!;
-        ValorDeducao = null!;
-        BaseCalculo = null!;
+        NumeroCredito = string.Empty;
+        NumeroNfse = string.Empty;
     }
 
     public static Credito Criar(
@@ -41,22 +35,55 @@ public class Credito
         decimal valorDeducao,
         decimal baseCalculo)
     {
+        ValidarDados(numeroCredito, numeroNfse, valorIssqn, aliquota, valorFaturado, valorDeducao, baseCalculo);
+
         var credito = new Credito
         {
-            NumeroCredito = NumeroCredito.Criar(numeroCredito),
-            NumeroNfse = NumeroNfse.Criar(numeroNfse),
+            NumeroCredito = numeroCredito,
+            NumeroNfse = numeroNfse,
             DataConstituicao = dataConstituicao,
             TipoCredito = tipoCredito,
             SimplesNacional = simplesNacional,
-            Aliquota = Percentual.Criar(aliquota),
-            ValorFaturado = Dinheiro.Criar(valorFaturado),
-            ValorDeducao = Dinheiro.Criar(valorDeducao),
-            BaseCalculo = Dinheiro.Criar(baseCalculo),
-            ValorIssqn = Dinheiro.Criar(valorIssqn)
+            Aliquota = aliquota,
+            ValorFaturado = valorFaturado,
+            ValorDeducao = valorDeducao,
+            BaseCalculo = baseCalculo,
+            ValorIssqn = valorIssqn
         };
 
         credito.ValidarInvariantes();
         return credito;
+    }
+
+    private static void ValidarDados(
+        string numeroCredito,
+        string numeroNfse,
+        decimal valorIssqn,
+        decimal aliquota,
+        decimal valorFaturado,
+        decimal valorDeducao,
+        decimal baseCalculo)
+    {
+        if (string.IsNullOrWhiteSpace(numeroCredito))
+            throw new CreditoInvalidoException("Número do crédito é obrigatório");
+
+        if (string.IsNullOrWhiteSpace(numeroNfse))
+            throw new CreditoInvalidoException("Número da NFS-e é obrigatório");
+
+        if (valorIssqn <= 0)
+            throw new CreditoInvalidoException("Valor do ISSQN deve ser maior que zero");
+
+        if (aliquota < 0 || aliquota > 100)
+            throw new CreditoInvalidoException("Alíquota deve estar entre 0 e 100");
+
+        if (valorFaturado <= 0)
+            throw new CreditoInvalidoException("Valor faturado deve ser maior que zero");
+
+        if (valorDeducao < 0)
+            throw new CreditoInvalidoException("Valor de dedução não pode ser negativo");
+
+        if (baseCalculo <= 0)
+            throw new CreditoInvalidoException("Base de cálculo deve ser maior que zero");
     }
 
     private void ValidarInvariantes()
@@ -64,17 +91,14 @@ public class Credito
         if (DataConstituicao > DateTime.Now)
             throw new CreditoInvalidoException("Data de constituição não pode ser futura");
 
-        if (ValorIssqn <= Dinheiro.Zero)
-            throw new CreditoInvalidoException("Valor do ISSQN deve ser maior que zero");
-
         var baseCalculoEsperada = ValorFaturado - ValorDeducao;
-        if (Math.Abs(BaseCalculo.Valor - baseCalculoEsperada.Valor) > 0.01m)
+        if (Math.Abs(BaseCalculo - baseCalculoEsperada) > 0.01m)
             throw new CreditoInvalidoException(
-                $"Base de cálculo inválida. Esperado: {baseCalculoEsperada}, Recebido: {BaseCalculo}");
+                $"Base de cálculo inválida. Esperado: {baseCalculoEsperada:F2}, Recebido: {BaseCalculo:F2}");
 
-        var valorIssqnEsperado = Aliquota.AplicarSobre(BaseCalculo);
-        if (Math.Abs(ValorIssqn.Valor - valorIssqnEsperado.Valor) > 0.01m)
+        var valorIssqnEsperado = BaseCalculo * (Aliquota / 100m);
+        if (Math.Abs(ValorIssqn - valorIssqnEsperado) > 0.01m)
             throw new CreditoInvalidoException(
-                $"Valor do ISSQN inválido. Esperado: {valorIssqnEsperado}, Recebido: {ValorIssqn}");
+                $"Valor do ISSQN inválido. Esperado: {valorIssqnEsperado:F2}, Recebido: {ValorIssqn:F2}");
     }
 }

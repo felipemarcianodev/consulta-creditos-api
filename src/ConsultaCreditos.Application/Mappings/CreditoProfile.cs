@@ -10,16 +10,8 @@ public class CreditoProfile : Profile
     public CreditoProfile()
     {
         CreateMap<Credito, CreditoDto>()
-            .ForMember(dest => dest.NumeroCredito, opt => opt.MapFrom(src => src.NumeroCredito.Valor))
-            .ForMember(dest => dest.NumeroNfse, opt => opt.MapFrom(src => src.NumeroNfse.Valor))
-            .ForMember(dest => dest.DataConstituicao, opt => opt.MapFrom(src => src.DataConstituicao))
-            .ForMember(dest => dest.ValorIssqn, opt => opt.MapFrom(src => src.ValorIssqn.Valor))
             .ForMember(dest => dest.TipoCredito, opt => opt.MapFrom(src => src.TipoCredito.ToString()))
-            .ForMember(dest => dest.SimplesNacional, opt => opt.MapFrom(src => src.SimplesNacional ? "Sim" : "Não"))
-            .ForMember(dest => dest.Aliquota, opt => opt.MapFrom(src => src.Aliquota.Valor))
-            .ForMember(dest => dest.ValorFaturado, opt => opt.MapFrom(src => src.ValorFaturado.Valor))
-            .ForMember(dest => dest.ValorDeducao, opt => opt.MapFrom(src => src.ValorDeducao.Valor))
-            .ForMember(dest => dest.BaseCalculo, opt => opt.MapFrom(src => src.BaseCalculo.Valor));
+            .ForMember(dest => dest.SimplesNacional, opt => opt.MapFrom(src => src.SimplesNacional ? "Sim" : "Não"));
 
         CreateMap<IntegrarCreditoRequest, Credito>()
             .ConvertUsing(src => Credito.Criar(

@@ -4,7 +4,9 @@ using ConsultaCreditos.API.Middlewares;
 using ConsultaCreditos.Application.Handlers;
 using ConsultaCreditos.Application.Mappings;
 using ConsultaCreditos.Infrastructure;
+using ConsultaCreditos.Infrastructure.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
 
@@ -73,6 +75,24 @@ if (builder.Configuration.GetValue<bool>("ServiceBus:Enabled"))
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("Aplicando migrations...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Migrations aplicadas com sucesso!");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Erro ao aplicar migrations");
+        throw;
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

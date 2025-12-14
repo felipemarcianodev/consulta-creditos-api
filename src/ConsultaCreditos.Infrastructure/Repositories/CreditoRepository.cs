@@ -26,7 +26,7 @@ public class CreditoRepository : ICreditoRepository
     {
         return await _context.Creditos
             .AsNoTracking()
-            .Where(c => c.NumeroNfse.Valor == numeroNfse)
+            .Where(c => c.NumeroNfse == numeroNfse)
             .OrderByDescending(c => c.DataConstituicao)
             .ToListAsync(cancellationToken);
     }
@@ -35,13 +35,13 @@ public class CreditoRepository : ICreditoRepository
     {
         return await _context.Creditos
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.NumeroCredito.Valor == numeroCredito, cancellationToken);
+            .FirstOrDefaultAsync(c => c.NumeroCredito == numeroCredito, cancellationToken);
     }
 
     public async Task<bool> ExisteAsync(string numeroCredito, CancellationToken cancellationToken = default)
     {
         return await _context.Creditos
             .AsNoTracking()
-            .AnyAsync(c => c.NumeroCredito.Valor == numeroCredito, cancellationToken);
+            .AnyAsync(c => c.NumeroCredito == numeroCredito, cancellationToken);
     }
 }

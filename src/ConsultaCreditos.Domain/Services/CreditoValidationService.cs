@@ -1,6 +1,5 @@
 using ConsultaCreditos.Domain.Entities;
 using ConsultaCreditos.Domain.Exceptions;
-using ConsultaCreditos.Domain.ValueObjects;
 
 namespace ConsultaCreditos.Domain.Services;
 
@@ -12,22 +11,22 @@ public class CreditoValidationService
         ValidarValorIssqn(credito.BaseCalculo, credito.Aliquota, credito.ValorIssqn);
     }
 
-    public void ValidarBaseCalculo(Dinheiro valorFaturado, Dinheiro valorDeducao, Dinheiro baseCalculo)
+    public void ValidarBaseCalculo(decimal valorFaturado, decimal valorDeducao, decimal baseCalculo)
     {
         var baseCalculoEsperada = valorFaturado - valorDeducao;
 
-        if (Math.Abs(baseCalculo.Valor - baseCalculoEsperada.Valor) > 0.01m)
+        if (Math.Abs(baseCalculo - baseCalculoEsperada) > 0.01m)
             throw new CreditoInvalidoException(
-                $"Base de cálculo inválida. Esperado: {baseCalculoEsperada}, Recebido: {baseCalculo}");
+                $"Base de cálculo inválida. Esperado: {baseCalculoEsperada:F2}, Recebido: {baseCalculo:F2}");
     }
 
-    public void ValidarValorIssqn(Dinheiro baseCalculo, Percentual aliquota, Dinheiro valorIssqn)
+    public void ValidarValorIssqn(decimal baseCalculo, decimal aliquota, decimal valorIssqn)
     {
-        var valorIssqnEsperado = aliquota.AplicarSobre(baseCalculo);
+        var valorIssqnEsperado = baseCalculo * (aliquota / 100m);
 
-        if (Math.Abs(valorIssqn.Valor - valorIssqnEsperado.Valor) > 0.01m)
+        if (Math.Abs(valorIssqn - valorIssqnEsperado) > 0.01m)
             throw new CreditoInvalidoException(
-                $"Valor do ISSQN inválido. Esperado: {valorIssqnEsperado}, Recebido: {valorIssqn}");
+                $"Valor do ISSQN inválido. Esperado: {valorIssqnEsperado:F2}, Recebido: {valorIssqn:F2}");
     }
 
     public void ValidarConsistencia(Credito credito)
@@ -35,7 +34,7 @@ public class CreditoValidationService
         if (credito.DataConstituicao > DateTime.Now)
             throw new CreditoInvalidoException("Data de constituição não pode ser futura");
 
-        if (credito.ValorIssqn <= Dinheiro.Zero)
+        if (credito.ValorIssqn <= 0)
             throw new CreditoInvalidoException("Valor do ISSQN deve ser maior que zero");
 
         if (credito.ValorFaturado < credito.ValorDeducao)

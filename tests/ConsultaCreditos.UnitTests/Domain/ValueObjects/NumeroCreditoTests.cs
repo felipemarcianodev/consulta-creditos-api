@@ -29,7 +29,7 @@ public class NumeroCreditoTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Criar_ComValorVazio_DeveLancarExcecao(string valor)
+    public void Criar_ComValorVazio_DeveLancarExcecao(string? valor)
     {
         var act = () => NumeroCredito.Criar(valor);
 

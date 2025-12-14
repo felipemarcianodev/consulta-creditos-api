@@ -24,16 +24,16 @@ public class CreditoTests
         );
 
         credito.Should().NotBeNull();
-        credito.NumeroCredito.Valor.Should().Be("123456");
-        credito.NumeroNfse.Valor.Should().Be("7891011");
+        credito.NumeroCredito.Should().Be("123456");
+        credito.NumeroNfse.Should().Be("7891011");
         credito.DataConstituicao.Should().Be(new DateTime(2024, 2, 25));
-        credito.ValorIssqn.Valor.Should().Be(1250m);
+        credito.ValorIssqn.Should().Be(1250m);
         credito.TipoCredito.Should().Be(TipoCredito.ISSQN);
         credito.SimplesNacional.Should().BeTrue();
-        credito.Aliquota.Valor.Should().Be(5m);
-        credito.ValorFaturado.Valor.Should().Be(30000m);
-        credito.ValorDeducao.Valor.Should().Be(5000m);
-        credito.BaseCalculo.Valor.Should().Be(25000m);
+        credito.Aliquota.Should().Be(5m);
+        credito.ValorFaturado.Should().Be(30000m);
+        credito.ValorDeducao.Should().Be(5000m);
+        credito.BaseCalculo.Should().Be(25000m);
     }
 
     [Fact]
@@ -134,7 +134,8 @@ public class CreditoTests
             baseCalculo: 25000m
         );
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<CreditoInvalidoException>()
+            .WithMessage("*obrigatório*");
     }
 
     [Fact]
@@ -153,7 +154,8 @@ public class CreditoTests
             baseCalculo: 25000m
         );
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<CreditoInvalidoException>()
+            .WithMessage("*obrigatório*");
     }
 
     [Fact]
@@ -172,7 +174,8 @@ public class CreditoTests
             baseCalculo: 25000m
         );
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<CreditoInvalidoException>()
+            .WithMessage("*entre 0 e 100*");
     }
 
     [Fact]
@@ -191,7 +194,8 @@ public class CreditoTests
             baseCalculo: 25000m
         );
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<CreditoInvalidoException>()
+            .WithMessage("*entre 0 e 100*");
     }
 
     [Fact]

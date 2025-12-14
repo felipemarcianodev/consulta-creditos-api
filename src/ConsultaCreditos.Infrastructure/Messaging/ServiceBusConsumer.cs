@@ -18,7 +18,6 @@ public class ServiceBusConsumer
 {
     private readonly ServiceBusClient _client;
     private readonly ServiceBusProcessor _processor;
-    private readonly ProcessarCreditoHandler _handler;
     private readonly ILogger<ServiceBusConsumer> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly AsyncCircuitBreakerPolicy _circuitBreaker;
@@ -27,6 +26,9 @@ public class ServiceBusConsumer
         IServiceScopeFactory scopeFactory,
         ILogger<ServiceBusConsumer> logger)
     {
+        _logger = logger;
+        _scopeFactory = scopeFactory;
+
         _circuitBreaker = Policy
         .Handle<ServiceBusException>()
         .Or<SocketException>()
@@ -44,9 +46,6 @@ public class ServiceBusConsumer
             {
                 _logger.LogInformation("Circuit breaker FECHADO. Tentando reconectar ao Service Bus.");
             });
-
-        _scopeFactory = scopeFactory;
-        _logger = logger;
 
         var connectionString = configuration["ServiceBus:ConnectionString"]
             ?? throw new InvalidOperationException("ServiceBus ConnectionString não configurada");

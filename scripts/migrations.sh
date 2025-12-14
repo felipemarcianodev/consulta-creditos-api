@@ -2,7 +2,7 @@
 
 echo "Aplicando migrations no banco de dados..."
 
-docker-compose exec api dotnet ef database update --project /src/src/ConsultaCreditos.Infrastructure --startup-project /src/src/ConsultaCreditos.API
+docker-compose exec consulta-creditos-api dotnet ef database update --project /src/src/ConsultaCreditos.Infrastructure --startup-project /src/src/ConsultaCreditos.API
 
 if [ $? -eq 0 ]; then
     echo "Migrations aplicadas com sucesso!"

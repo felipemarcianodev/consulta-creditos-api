@@ -42,7 +42,7 @@ public class CreditoRepositoryTests : IDisposable
 
         var creditoNoBanco = await _context.Creditos.FirstOrDefaultAsync();
         creditoNoBanco.Should().NotBeNull();
-        creditoNoBanco!.NumeroCredito.Valor.Should().Be("123456");
+        creditoNoBanco!.NumeroCredito.Should().Be("123456");
     }
 
     [Fact]
@@ -80,8 +80,8 @@ public class CreditoRepositoryTests : IDisposable
         var result = await _repository.ObterPorNumeroNfseAsync("7891011");
 
         result.Should().HaveCount(2);
-        result[0].NumeroCredito.Valor.Should().Be("789012");
-        result[1].NumeroCredito.Valor.Should().Be("123456");
+        result[0].NumeroCredito.Should().Be("789012");
+        result[1].NumeroCredito.Should().Be("123456");
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class CreditoRepositoryTests : IDisposable
         var result = await _repository.ObterPorNumeroCreditoAsync("123456");
 
         result.Should().NotBeNull();
-        result!.NumeroCredito.Valor.Should().Be("123456");
+        result!.NumeroCredito.Should().Be("123456");
     }
 
     [Fact]

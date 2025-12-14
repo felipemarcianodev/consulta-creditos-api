@@ -417,4 +417,9 @@ docker-compose.override.yml
 *.db-shm
 *.db-wal
 
-/Tests/CoverageReport
+# Coverage reports
+**/coveragereport/
+**/coverage/
+**/coverage.cobertura.xml
+**/coverage.opencover.xml
+**/coverage.json
