@@ -208,4 +208,79 @@ public class DinheiroTests
 
         valor.Should().Be(1500.75m);
     }
+
+    [Fact]
+    public void Equals_ComNull_DeveRetornarFalse()
+    {
+        var dinheiro = Dinheiro.Criar(100m);
+
+        dinheiro.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Equals_ComMesmaReferencia_DeveRetornarTrue()
+    {
+        var dinheiro = Dinheiro.Criar(100m);
+
+        dinheiro.Equals(dinheiro).Should().BeTrue();
+    }
+
+    [Fact]
+    public void EqualsObject_ComDinheiroIgual_DeveRetornarTrue()
+    {
+        var dinheiro1 = Dinheiro.Criar(100m);
+        object dinheiro2 = Dinheiro.Criar(100m);
+
+        dinheiro1.Equals(dinheiro2).Should().BeTrue();
+    }
+
+    [Fact]
+    public void EqualsObject_ComOutroTipo_DeveRetornarFalse()
+    {
+        var dinheiro = Dinheiro.Criar(100m);
+        object outro = "teste";
+
+        dinheiro.Equals(outro).Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetHashCode_ComMesmoValor_DeveRetornarMesmoHash()
+    {
+        var dinheiro1 = Dinheiro.Criar(100m);
+        var dinheiro2 = Dinheiro.Criar(100m);
+
+        dinheiro1.GetHashCode().Should().Be(dinheiro2.GetHashCode());
+    }
+
+    [Fact]
+    public void CompareTo_ComNull_DeveRetornar1()
+    {
+        var dinheiro = Dinheiro.Criar(100m);
+
+        dinheiro.CompareTo(null).Should().Be(1);
+    }
+
+    [Fact]
+    public void OperadorMaiorOuIgual_DeveRetornarResultadoCorreto()
+    {
+        var dinheiro1 = Dinheiro.Criar(100m);
+        var dinheiro2 = Dinheiro.Criar(50m);
+        var dinheiro3 = Dinheiro.Criar(100m);
+
+        (dinheiro1 >= dinheiro2).Should().BeTrue();
+        (dinheiro1 >= dinheiro3).Should().BeTrue();
+        (dinheiro2 >= dinheiro1).Should().BeFalse();
+    }
+
+    [Fact]
+    public void OperadorMenorOuIgual_DeveRetornarResultadoCorreto()
+    {
+        var dinheiro1 = Dinheiro.Criar(50m);
+        var dinheiro2 = Dinheiro.Criar(100m);
+        var dinheiro3 = Dinheiro.Criar(50m);
+
+        (dinheiro1 <= dinheiro2).Should().BeTrue();
+        (dinheiro1 <= dinheiro3).Should().BeTrue();
+        (dinheiro2 <= dinheiro1).Should().BeFalse();
+    }
 }

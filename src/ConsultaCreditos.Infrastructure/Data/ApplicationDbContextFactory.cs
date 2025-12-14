@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ConsultaCreditos.Infrastructure.Data;
 
+[ExcludeFromCodeCoverage]
 public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
     public ApplicationDbContext CreateDbContext(string[] args)

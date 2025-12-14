@@ -161,4 +161,79 @@ public class PercentualTests
 
         valor.Should().Be(5m);
     }
+
+    [Fact]
+    public void Equals_ComNull_DeveRetornarFalse()
+    {
+        var percentual = Percentual.Criar(5m);
+
+        percentual.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Equals_ComMesmaReferencia_DeveRetornarTrue()
+    {
+        var percentual = Percentual.Criar(5m);
+
+        percentual.Equals(percentual).Should().BeTrue();
+    }
+
+    [Fact]
+    public void EqualsObject_ComPercentualIgual_DeveRetornarTrue()
+    {
+        var percentual1 = Percentual.Criar(5m);
+        object percentual2 = Percentual.Criar(5m);
+
+        percentual1.Equals(percentual2).Should().BeTrue();
+    }
+
+    [Fact]
+    public void EqualsObject_ComOutroTipo_DeveRetornarFalse()
+    {
+        var percentual = Percentual.Criar(5m);
+        object outro = "teste";
+
+        percentual.Equals(outro).Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetHashCode_ComMesmoValor_DeveRetornarMesmoHash()
+    {
+        var percentual1 = Percentual.Criar(5m);
+        var percentual2 = Percentual.Criar(5m);
+
+        percentual1.GetHashCode().Should().Be(percentual2.GetHashCode());
+    }
+
+    [Fact]
+    public void CompareTo_ComNull_DeveRetornar1()
+    {
+        var percentual = Percentual.Criar(5m);
+
+        percentual.CompareTo(null).Should().Be(1);
+    }
+
+    [Fact]
+    public void OperadorMaiorOuIgual_DeveRetornarResultadoCorreto()
+    {
+        var percentual1 = Percentual.Criar(10m);
+        var percentual2 = Percentual.Criar(5m);
+        var percentual3 = Percentual.Criar(10m);
+
+        (percentual1 >= percentual2).Should().BeTrue();
+        (percentual1 >= percentual3).Should().BeTrue();
+        (percentual2 >= percentual1).Should().BeFalse();
+    }
+
+    [Fact]
+    public void OperadorMenorOuIgual_DeveRetornarResultadoCorreto()
+    {
+        var percentual1 = Percentual.Criar(5m);
+        var percentual2 = Percentual.Criar(10m);
+        var percentual3 = Percentual.Criar(5m);
+
+        (percentual1 <= percentual2).Should().BeTrue();
+        (percentual1 <= percentual3).Should().BeTrue();
+        (percentual2 <= percentual1).Should().BeFalse();
+    }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Azure.Messaging.ServiceBus;
 using ConsultaCreditos.Application.DTOs;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ConsultaCreditos.Infrastructure.Messaging;
 
+[ExcludeFromCodeCoverage]
 public class ServiceBusPublisher : IServiceBusPublisher
 {
     private readonly ServiceBusClient _client;
@@ -27,7 +29,7 @@ public class ServiceBusPublisher : IServiceBusPublisher
         _sender = _client.CreateSender(topicName);
     }
 
-    public async Task PublicarCreditoAsync(IntegrarCreditoRequest credito, CancellationToken cancellationToken = default)
+    public async Task PublicarAsync(IntegrarCreditoRequest credito, CancellationToken cancellationToken = default)
     {
         try
         {

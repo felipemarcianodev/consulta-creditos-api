@@ -29,7 +29,7 @@ public class IntegrarCreditoHandler
                 throw new ValidationException($"Erro de validação: {errors}");
             }
 
-            await _serviceBusPublisher.PublicarCreditoAsync(credito, cancellationToken);
+            await _serviceBusPublisher.PublicarAsync(credito, cancellationToken);
         }
 
         return IntegrarCreditoResponse.Sucesso();

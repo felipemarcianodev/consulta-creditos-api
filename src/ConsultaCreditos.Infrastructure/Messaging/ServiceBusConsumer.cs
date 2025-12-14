@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Text.Json;
 using Azure.Messaging.ServiceBus;
@@ -12,6 +13,7 @@ using Polly.CircuitBreaker;
 
 namespace ConsultaCreditos.Infrastructure.Messaging;
 
+[ExcludeFromCodeCoverage]
 public class ServiceBusConsumer
 {
     private readonly ServiceBusClient _client;

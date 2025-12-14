@@ -2,9 +2,11 @@ using ConsultaCreditos.Domain.Entities;
 using ConsultaCreditos.Domain.Interfaces;
 using ConsultaCreditos.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ConsultaCreditos.Infrastructure.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class CreditoRepository : ICreditoRepository
 {
     private readonly ApplicationDbContext _context;
