@@ -346,10 +346,32 @@ dotnet test
 dotnet test /p:CollectCoverage=true
 ```
 
+## Documentação da API
+
+A documentação completa da API é gerada automaticamente via **Swagger/OpenAPI** a partir do código-fonte.
+
+**Acesse a documentação interativa:**
+```
+http://localhost:8080/swagger
+```
+
+**Recursos do Swagger:**
+- Documentação completa de todos os endpoints
+- Testar endpoints diretamente no navegador (Try it out)
+- Schemas detalhados de request/response
+- Exemplos práticos de uso
+- Códigos de status HTTP e validações
+
+**OpenAPI Spec (JSON):**
+```
+http://localhost:8080/openapi/v1.json
+```
+
 ## Documentação adicional
 
-- [Guia de Docker](docs/DOCKER.md) - Informações detalhadas sobre containerização
-- Swagger UI - Disponível em http://localhost:8080/swagger apos iniciar a API
+- [Guia de Docker](DOCKER.md) - Informações detalhadas sobre containerização
+- [Setup do Azure Service Bus](AZURE-SERVICE-BUS-SETUP.md) - Guia completo de configuração
+- [Estratégia de Testes](TESTING-STRATEGY.md) - Cobertura e abordagem de testes
 
 ## Fluxo de funcionamento
 
