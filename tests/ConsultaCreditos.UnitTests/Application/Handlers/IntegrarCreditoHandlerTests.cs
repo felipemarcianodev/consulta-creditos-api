@@ -2,8 +2,8 @@ using ConsultaCreditos.Application.Commands;
 using ConsultaCreditos.Application.DTOs;
 using ConsultaCreditos.Application.Handlers;
 using ConsultaCreditos.Application.Interfaces;
+using ConsultaCreditos.Domain.Exceptions;
 using FluentAssertions;
-using FluentValidation;
 using Moq;
 
 namespace ConsultaCreditos.UnitTests.Application.Handlers;
@@ -85,7 +85,7 @@ public class IntegrarCreditoHandlerTests
 
         var act = async () => await _handler.Handle(command);
 
-        await act.Should().ThrowAsync<ValidationException>();
+        await act.Should().ThrowAsync<DomainException>();
         _serviceBusPublisherMock.Verify(x => x.PublishAsync(It.IsAny<IntegrarCreditoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
