@@ -1,13 +1,11 @@
 using AutoMapper;
 using ConsultaCreditos.API.BackgroundServices;
+using ConsultaCreditos.API.Extensions;
 using ConsultaCreditos.API.Middlewares;
 using ConsultaCreditos.Application.Handlers;
 using ConsultaCreditos.Application.Mappings;
 using ConsultaCreditos.Infrastructure;
-using ConsultaCreditos.Infrastructure.Data;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,24 +19,7 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi(options =>
-{
-    options.AddDocumentTransformer((document, context, cancellationToken) =>
-    {
-        document.Info = new()
-        {
-            Title = "API de Consulta de Créditos Constituídos",
-            Version = "v1",
-            Description = "API RESTful para integração e consulta de créditos constituídos com processamento assíncrono via Azure Service Bus",
-            Contact = new()
-            {
-                Name = "Equipe de Desenvolvimento",
-                Email = "contato@example.com"
-            }
-        };
-        return Task.CompletedTask;
-    });
-});
+builder.Services.AddOpenApiCustomService();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -51,61 +32,23 @@ builder.Services.AddSingleton(mapperConfig.CreateMapper());
 builder.Services.AddScoped<IntegrarCreditoHandler>();
 builder.Services.AddScoped<ObterCreditosPorNfseHandler>();
 builder.Services.AddScoped<ObterCreditoPorNumeroHandler>();
-builder.Services.AddHealthChecks()
-    .AddCheck(
-        "self",
-        () => HealthCheckResult.Healthy(),
-        tags: new[] { "self" })
-
-    .AddNpgSql(
-        builder.Configuration.GetConnectionString("DefaultConnection")!,
-        name: "postgresql",
-        tags: new[] { "db", "ready" })
-
-    .AddAzureServiceBusTopic(
-        builder.Configuration["ServiceBus:ConnectionString"]!,
-        builder.Configuration["ServiceBus:TopicName"]!,
-        name: "servicebus",
-        tags: new[] { "messaging", "ready" });
+builder.Services.HealthCheckCustomService
+    (
+     builder.Configuration.GetConnectionString("DefaultConnection")!,
+     builder.Configuration["ServiceBus:ConnectionString"]!,
+     builder.Configuration["ServiceBus:TopicName"]!
+    );
 
 if (builder.Configuration.GetValue<bool>("ServiceBus:Enabled"))
 {
     builder.Services.AddHostedService<CreditoProcessorService>();
 }
 
-
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+app.ActiveDBMigration();
 
-    try
-    {
-        logger.LogInformation("Aplicando migrations...");
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Migrations aplicadas com sucesso!");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Erro ao aplicar migrations");
-        throw;
-    }
-}
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "API de Consulta de Créditos v1");
-        options.DocumentTitle = "API de Consulta de Créditos - Documentação";
-        options.RoutePrefix = "swagger";
-        options.DisplayRequestDuration();
-        options.EnableTryItOutByDefault();
-    });
-}
+app.SwaggerCustomConfig();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -115,17 +58,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHealthChecks("/health/self", new HealthCheckOptions
-{
-    Predicate = _ => false
-});
-
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+app.HealthCheckCustomConfig();
 
 Log.Information("Iniciando ConsultaCreditos.API");
 
